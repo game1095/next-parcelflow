@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useEffect as useReactEffect } from "react";
+import { createPortal } from "react-dom";
 
 type NoPhotoItem = {
   barcode: string;
@@ -39,6 +40,11 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
 
   const [selectedNoPhotoRow, setSelectedNoPhotoRow] =
     useState<SummaryRow | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useReactEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Reset to page 1 when searching or sorting changes
   useEffect(() => {
@@ -183,7 +189,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
           <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-y border-gray-200 dark:border-gray-700">
             <tr>
               <th
-                className="px-6 py-4 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                className="px-4 py-3 font-medium cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                 onClick={() => requestSort("office")}
               >
                 <div className="flex items-center gap-2">
@@ -194,7 +200,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                 </div>
               </th>
               <th
-                className="px-6 py-4 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                className="px-4 py-3 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                 onClick={() => requestSort("report_date")}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -205,7 +211,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                 </div>
               </th>
               <th
-                className="px-6 py-4 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                className="px-4 py-3 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                 onClick={() => requestSort("total")}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -216,7 +222,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                 </div>
               </th>
               <th
-                className="px-6 py-4 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                className="px-4 py-3 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                 onClick={() => requestSort("no_photo")}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -227,7 +233,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                 </div>
               </th>
               <th
-                className="px-6 py-4 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                className="px-4 py-3 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                 onClick={() => requestSort("waiting")}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -238,7 +244,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                 </div>
               </th>
               <th
-                className="px-6 py-4 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
+                className="px-4 py-3 font-medium text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors group"
                 onClick={() => requestSort("completed")}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -257,7 +263,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                   key={`${row.office}_${row.post_code}_${index}`}
                   className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors duration-150"
                 >
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-3">
                     <div className="font-medium text-gray-900 dark:text-gray-100">
                       {row.office}
                     </div>
@@ -265,24 +271,24 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                       {row.post_code}
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <span className="text-gray-600 dark:text-gray-400">
                       {row.report_date
                         ? new Date(row.report_date).toLocaleDateString("th-TH")
                         : "-"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <span className="font-bold text-gray-800 dark:text-gray-200">
                       {row.total}
                     </span>
                   </td>
-                  <td className="px-6 py-2 text-center align-middle">
+                  <td className="px-4 py-2 text-center align-middle">
                     <button
                       onClick={() =>
                         row.no_photo > 0 && setSelectedNoPhotoRow(row)
                       }
-                      className={`group relative flex flex-col items-center justify-center w-full p-2.5 rounded-2xl transition-all duration-300 ${
+                      className={`group relative flex flex-col items-center justify-center w-full p-2 rounded-2xl transition-all duration-300 ${
                         row.no_photo > 0
                           ? "hover:bg-red-50/80 dark:hover:bg-red-900/10 border border-transparent hover:border-red-100 dark:hover:border-red-900/30 cursor-pointer"
                           : "cursor-default"
@@ -291,7 +297,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                       {/* Main Badge */}
                       <div className="flex items-center justify-center gap-1.5">
                         <span
-                          className={`inline-flex items-center justify-center min-w-[2.75rem] px-3 py-1.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                          className={`inline-flex items-center justify-center min-w-[2.5rem] px-3 py-1 rounded-lg text-sm font-bold transition-all duration-300 ${
                             row.no_photo > 0
                               ? "bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-md shadow-red-500/20 group-hover:shadow-red-500/40 group-hover:scale-105 group-hover:-translate-y-0.5"
                               : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
@@ -313,31 +319,31 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
 
                       {/* Platform Breakdown */}
                       {row.no_photo > 0 && (
-                        <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5">
+                        <div className="flex flex-wrap items-center justify-center gap-1 mt-2">
                           {row.no_photo_details.tiktok > 0 && (
                             <div
-                              className="flex items-center gap-1.5 bg-[#000000] text-white px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
+                              className="flex items-center gap-1 bg-[#000000] text-white px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
                               title="Tiktok"
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#00f2fe] shadow-[0_0_4px_#00f2fe] animate-pulse"></span>
+                              <span className="w-1 h-1 rounded-full bg-[#00f2fe] shadow-[0_0_4px_#00f2fe] animate-pulse"></span>
                               Tiktok : {row.no_photo_details.tiktok}
                             </div>
                           )}
                           {row.no_photo_details.shopee > 0 && (
                             <div
-                              className="flex items-center gap-1.5 bg-gradient-to-r from-[#ee4d2d] to-[#ff7337] text-white px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
+                              className="flex items-center gap-1 bg-gradient-to-r from-[#ee4d2d] to-[#ff7337] text-white px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
                               title="Shopee"
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_4px_#fff]"></span>
+                              <span className="w-1 h-1 rounded-full bg-white shadow-[0_0_4px_#fff]"></span>
                               Shopee : {row.no_photo_details.shopee}
                             </div>
                           )}
                           {row.no_photo_details.lazada > 0 && (
                             <div
-                              className="flex items-center gap-1.5 bg-gradient-to-r from-[#0f146d] to-[#1a237e] text-white px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
+                              className="flex items-center gap-1 bg-gradient-to-r from-[#0f146d] to-[#1a237e] text-white px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
                               title="Lazada"
                             >
-                              <span className="w-1.5 h-1.5 rounded-full bg-pink-400 shadow-[0_0_4px_#f472b6]"></span>
+                              <span className="w-1 h-1 rounded-full bg-pink-400 shadow-[0_0_4px_#f472b6]"></span>
                               Lazada : {row.no_photo_details.lazada}
                             </div>
                           )}
@@ -345,9 +351,9 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                       )}
                     </button>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <span
-                      className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                         row.waiting > 0
                           ? "bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
                           : "text-gray-400"
@@ -356,9 +362,9 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                       {row.waiting > 0 ? row.waiting : "-"}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-4 py-3 text-center">
                     <span
-                      className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${
+                      className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                         row.completed > 0
                           ? "bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-800"
                           : "text-gray-400"
@@ -432,178 +438,172 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
         )}
       </div>
       {/* Modal for No Photo Details */}
-      {selectedNoPhotoRow && (
+      {mounted && selectedNoPhotoRow && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm modal-active"
           onClick={() => setSelectedNoPhotoRow(null)}
         >
           <div
-            className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden transform transition-all"
+            className="bg-gray-50 dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-5 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center bg-gray-50/80 dark:bg-gray-800/80">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 flex items-center gap-3">
-                <span className="bg-red-100 text-red-600 dark:bg-red-900/50 dark:text-red-400 p-2 rounded-xl">
-                  <svg
-                    className="w-5 h-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2.5}
-                      d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                    />
+            {/* Modal Header */}
+            <div className="p-5 sm:px-8 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 relative">
+              <div className="flex items-center gap-4 w-full">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-800 shrink-0 shadow-inner">
+                  <svg className="w-7 h-7 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                   </svg>
-                </span>
-                รายการ No Photo - ที่ทำการ {selectedNoPhotoRow.office}
-              </h3>
+                </div>
+                <div className="flex-1 min-w-0 pr-8 sm:pr-0">
+                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-1 truncate">
+                    รายการ No Photo: <span className="text-indigo-600 dark:text-indigo-400">ที่ทำการ{selectedNoPhotoRow.office}</span>
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                    <span className="font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-md">
+                      รวมทั้งหมด {selectedNoPhotoRow.no_photo} ครั้ง
+                    </span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="font-medium bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                      รหัส ปณ. {selectedNoPhotoRow.post_code}
+                    </span>
+                  </div>
+                </div>
+              </div>
               <button
                 onClick={() => setSelectedNoPhotoRow(null)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 absolute sm:static top-5 right-5 bg-white dark:bg-gray-800 sm:bg-transparent shadow-sm sm:shadow-none border border-gray-100 dark:border-gray-700 sm:border-transparent"
+                title="ปิดหน้าต่าง"
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
             </div>
 
-            <div className="p-4 overflow-y-auto flex-1 bg-gray-50/30 dark:bg-gray-900/30">
+            {/* Modal Body */}
+            <div className="p-4 sm:p-6 overflow-y-auto flex-1 relative scroll-smooth">
               {groupedNoPhotoItems.length > 0 ? (
-                <div className="space-y-6">
+                <div className="space-y-8 pb-4">
                   {groupedNoPhotoItems.map((group, groupIdx) => (
-                    <div key={groupIdx} className="space-y-3 relative">
-                      <div className="sticky top-0 z-10 -mx-4 px-4 py-2 bg-gray-50/95 dark:bg-gray-900/95 backdrop-blur-md border-y border-gray-200 dark:border-gray-700 flex items-center gap-2">
-                        <svg
-                          className="w-5 h-5 text-indigo-500"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                          />
-                        </svg>
-                        <h4 className="font-bold text-gray-800 dark:text-gray-200">
+                    <div key={groupIdx} className="relative">
+                      {/* Date Header */}
+                      <div className="relative flex items-center gap-3 mb-4 bg-gray-50/95 dark:bg-gray-900/95 py-2.5 px-2 -mx-2 rounded-xl border border-transparent">
+                        <div className="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full shadow-sm"></div>
+                        <h4 className="font-extrabold text-gray-800 dark:text-gray-100 text-lg tracking-tight">
                           {group.date}
                         </h4>
-                        <span className="text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded-full">
+                        <div className="flex-1 border-t border-dashed border-gray-300 dark:border-gray-700 mx-2"></div>
+                        <span className="text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full shadow-sm">
                           {group.items.length} รายการ
                         </span>
                       </div>
+                      
+                      {/* Grid of Items */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {group.items.map((item, idx) => {
+                          const platform = item.file_key.toLowerCase();
+                          let bgClass = "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+                          let borderClass = "border-gray-200 dark:border-gray-700 hover:border-gray-300";
+                          let leftLineClass = "bg-gray-300 dark:bg-gray-600";
+                          
+                          if (platform === "tiktok") {
+                            bgClass = "bg-black text-white";
+                            leftLineClass = "bg-black dark:bg-gray-400";
+                          } else if (platform === "shopee") {
+                            bgClass = "bg-[#ee4d2d] text-white";
+                            leftLineClass = "bg-[#ee4d2d]";
+                          } else if (platform === "lazada") {
+                            bgClass = "bg-[#0f146d] text-white";
+                            leftLineClass = "bg-[#0f146d] dark:bg-blue-400";
+                          }
 
-                      <div className="space-y-3">
-                        {group.items.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex flex-col sm:flex-row gap-4 p-4 border border-gray-100 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 shadow-sm hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex-shrink-0 pt-0.5">
-                              {item.file_key.toLowerCase() === "tiktok" && (
-                                <span className="inline-flex justify-center min-w-[70px] bg-black text-white text-xs px-2.5 py-1.5 rounded-lg shadow-sm font-semibold">
-                                  Tiktok
-                                </span>
-                              )}
-                              {item.file_key.toLowerCase() === "shopee" && (
-                                <span className="inline-flex justify-center min-w-[70px] bg-[#ee4d2d] text-white text-xs px-2.5 py-1.5 rounded-lg shadow-sm font-semibold">
-                                  Shopee
-                                </span>
-                              )}
-                              {item.file_key.toLowerCase() === "lazada" && (
-                                <span className="inline-flex justify-center min-w-[70px] bg-[#0f146d] text-white text-xs px-2.5 py-1.5 rounded-lg shadow-sm font-semibold">
-                                  Lazada
-                                </span>
-                              )}
-                              {!["tiktok", "shopee", "lazada"].includes(
-                                item.file_key.toLowerCase(),
-                              ) && (
-                                <span className="inline-flex justify-center min-w-[70px] bg-gray-200 text-gray-800 text-xs px-2.5 py-1.5 rounded-lg shadow-sm font-semibold">
+                          return (
+                            <div
+                              key={idx}
+                              className={`bg-white dark:bg-gray-800 border ${borderClass} rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col gap-3 relative group overflow-hidden`}
+                            >
+                              {/* Left Edge Decoration */}
+                              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${leftLineClass} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
+                              
+                              <div className="flex justify-between items-start gap-3 pl-1.5">
+                                <div className="flex-1 min-w-0">
+                                  <a
+                                    href={`https://qms.thailandpost.com/Web/Tracking/singleTracking.aspx?type=item&id=${item.barcode}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="font-mono font-black text-gray-900 dark:text-white text-lg hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline flex items-center gap-1.5 transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate"
+                                    title="คลิกเพื่อตรวจสอบสถานะพัสดุ"
+                                  >
+                                    {item.barcode}
+                                    <svg
+                                      className="w-4 h-4 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all text-indigo-500 shrink-0"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                  </a>
+                                </div>
+                                <span className={`inline-flex justify-center shrink-0 min-w-[75px] text-[11px] px-3 py-1.5 rounded-lg shadow-sm font-bold tracking-wider uppercase ${bgClass}`}>
                                   {item.file_key || "Unknown"}
                                 </span>
-                              )}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex flex-wrap justify-between items-start gap-2 mb-2">
-                                <a
-                                  href={`https://qms.thailandpost.com/Web/Tracking/singleTracking.aspx?type=item&id=${item.barcode}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="font-mono font-bold text-indigo-600 dark:text-indigo-400 text-base hover:text-indigo-800 dark:hover:text-indigo-300 hover:underline flex items-center gap-1 transition-colors"
-                                  title="คลิกเพื่อตรวจสอบสถานะพัสดุ"
-                                >
-                                  {item.barcode}
-                                  <svg
-                                    className="w-4 h-4 opacity-70"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    stroke="currentColor"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      strokeWidth={2}
-                                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                                    />
-                                  </svg>
-                                </a>
                               </div>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-sm text-gray-600 dark:text-gray-300">
-                                <div className="flex items-start gap-1.5">
-                                  <span className="text-gray-400 dark:text-gray-500 w-16 flex-shrink-0">
-                                    user:
-                                  </span>
-                                  <span className="font-medium text-gray-800 dark:text-gray-200 break-words">
-                                    {item.user_name}
+                              
+                              <div className="pl-1.5 flex flex-col gap-2.5 mt-1 border-t border-gray-100 dark:border-gray-700/50 pt-3">
+                                <div className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                                  <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
+                                    <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                    </svg>
+                                  </div>
+                                  <span className="truncate font-medium" title={item.name}>
+                                    <span className="text-gray-900 dark:text-gray-100">{item.name || "-"}</span>
                                   </span>
                                 </div>
-                                <div className="flex items-start gap-1.5">
-                                  <span className="text-gray-400 dark:text-gray-500 w-16 flex-shrink-0">
-                                    ชื่อเจ้าหน้าที่:
-                                  </span>
-                                  <span className="font-medium text-gray-800 dark:text-gray-200 break-words">
-                                    {item.name}
+                                <div className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300">
+                                  <div className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                                    <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
+                                    </svg>
+                                  </div>
+                                  <span className="truncate font-medium" title={item.user_name}>
+                                    ID: <span className="text-gray-900 dark:text-gray-100">{item.user_name || "-"}</span>
                                   </span>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-10 text-gray-500 dark:text-gray-400">
-                  ไม่มีรายละเอียด
+                <div className="h-full flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400">
+                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-5">
+                    <svg className="w-10 h-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <p className="text-xl font-bold text-gray-700 dark:text-gray-300">ไม่มีรายละเอียดข้อมูล</p>
                 </div>
               )}
             </div>
 
-            <div className="p-4 border-t border-gray-100 dark:border-gray-700 bg-gray-50/80 dark:bg-gray-800/80 flex justify-end">
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 flex justify-end">
               <button
                 onClick={() => setSelectedNoPhotoRow(null)}
-                className="px-5 py-2.5 bg-gray-200 hover:bg-gray-300 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-xl font-semibold transition-colors"
+                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
               >
-                ปิดหน้าต่าง
+                <span>ปิดหน้าต่าง</span>
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
