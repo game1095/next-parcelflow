@@ -25,27 +25,21 @@ export default function DashboardClient({ isSetup }: DashboardClientProps) {
   const [globalPlatform, setGlobalPlatform] = useState<string>("all");
   const [globalProvince, setGlobalProvince] = useState<string>("all");
 
-  const getMonthStartString = () => {
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    return `${year}-${month}-01`;
-  };
-
-  const getMonthEndString = () => {
-    const today = new Date();
-    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-    const year = lastDay.getFullYear();
-    const month = String(lastDay.getMonth() + 1).padStart(2, "0");
-    const day = String(lastDay.getDate()).padStart(2, "0");
+  const getYesterdayString = () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const year = yesterday.getFullYear();
+    const month = String(yesterday.getMonth() + 1).padStart(2, "0");
+    const day = String(yesterday.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
   const [globalStartDate, setGlobalStartDate] = useState<string>(
-    getMonthStartString(),
+    getYesterdayString(),
   );
-  const [globalEndDate, setGlobalEndDate] =
-    useState<string>(getMonthEndString());
+  const [globalEndDate, setGlobalEndDate] = useState<string>(
+    getYesterdayString(),
+  );
 
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
