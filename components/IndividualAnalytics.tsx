@@ -218,7 +218,7 @@ export default function IndividualAnalytics({
     // Fill all dates between min and max
     if (minDate && maxDate) {
       let current = new Date(minDate);
-      while (current <= maxDate) {
+      while (current <= (maxDate as Date)) {
         allDates.add(current.toISOString().split("T")[0]);
         current.setDate(current.getDate() + 1);
       }
@@ -660,7 +660,7 @@ export default function IndividualAnalytics({
                       paddingAngle={3}
                       strokeWidth={0}
                       label={({ name, percent }) =>
-                        `${name} ${(percent * 100).toFixed(0)}%`
+                        `${name} ${((percent || 0) * 100).toFixed(0)}%`
                       }
                     >
                       {dayOfWeekData
