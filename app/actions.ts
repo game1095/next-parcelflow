@@ -144,6 +144,7 @@ export async function fetchDashboardData(
         total: 0,
         no_photo: 0,
         no_photo_details: { tiktok: 0, shopee: 0, lazada: 0, other: 0 },
+        file_type_details: { tiktok: 0, shopee: 0, lazada: 0, other: 0 },
         no_photo_items: [],
         waiting: 0,
         completed: 0,
@@ -160,6 +161,12 @@ export async function fetchDashboardData(
     }
 
     summaryMap[key].total++;
+
+    const fileType = (row.file_key || "").toLowerCase();
+    if (fileType === "tiktok") summaryMap[key].file_type_details.tiktok++;
+    else if (fileType === "shopee") summaryMap[key].file_type_details.shopee++;
+    else if (fileType === "lazada") summaryMap[key].file_type_details.lazada++;
+    else summaryMap[key].file_type_details.other++;
 
     const status = (row.status || "").toLowerCase().trim();
 

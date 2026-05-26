@@ -24,15 +24,30 @@ type NoPhotoItem = {
   report_date: string | null;
 };
 
-// Brand Colors for Platforms (more vibrant)
+// Brand Colors for Platforms (Soft Tones for Fallback/Text)
 const PLATFORM_COLORS = {
-  tiktok: "#25F4EE",
-  shopee: "#ee4d2d",
-  lazada: "#1a1aff",
+  tiktok: "#64748b", // Slate
+  shopee: "#fb923c", // Soft Orange
+  lazada: "#60a5fa", // Soft Blue
   other: "#9ca3af",
 };
 
-const TIKTOK_DARK = "#161616";
+const PlatformGradients = () => (
+  <defs>
+    <linearGradient id="gradTiktok" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="#cbd5e1" />
+      <stop offset="100%" stopColor="#64748b" />
+    </linearGradient>
+    <linearGradient id="gradShopee" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="#fdba74" />
+      <stop offset="100%" stopColor="#ea580c" />
+    </linearGradient>
+    <linearGradient id="gradLazada" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stopColor="#93c5fd" />
+      <stop offset="100%" stopColor="#2563eb" />
+    </linearGradient>
+  </defs>
+);
 
 // Premium tooltip style
 const tooltipStyle = {
@@ -76,18 +91,21 @@ export default function ExecutiveAnalytics({
         baseName: "Tiktok",
         value: t,
         color: PLATFORM_COLORS.tiktok,
+        fillId: "url(#gradTiktok)",
       },
       {
         id: "shopee",
         baseName: "Shopee",
         value: s,
         color: PLATFORM_COLORS.shopee,
+        fillId: "url(#gradShopee)",
       },
       {
         id: "lazada",
         baseName: "Lazada",
         value: l,
         color: PLATFORM_COLORS.lazada,
+        fillId: "url(#gradLazada)",
       },
     ]
       .filter((d) => d.value > 0)
@@ -147,6 +165,34 @@ export default function ExecutiveAnalytics({
       .map(([name, count]) => ({ name, count }));
   }, [mainPlatformItems]);
 
+  // 4. Day of Week Data
+  const dayOfWeekData = useMemo(() => {
+    const days = [
+      { id: 0, name: "อาทิตย์", count: 0, fillId: "url(#gradDay0)", color: "#f87171" }, // Red
+      { id: 1, name: "จันทร์", count: 0, fillId: "url(#gradDay1)", color: "#facc15" }, // Yellow
+      { id: 2, name: "อังคาร", count: 0, fillId: "url(#gradDay2)", color: "#f472b6" }, // Pink
+      { id: 3, name: "พุธ", count: 0, fillId: "url(#gradDay3)", color: "#4ade80" }, // Green
+      { id: 4, name: "พฤหัสฯ", count: 0, fillId: "url(#gradDay4)", color: "#fb923c" }, // Orange
+      { id: 5, name: "ศุกร์", count: 0, fillId: "url(#gradDay5)", color: "#60a5fa" }, // Blue
+      { id: 6, name: "เสาร์", count: 0, fillId: "url(#gradDay6)", color: "#c084fc" }, // Purple
+    ];
+
+    items.forEach((item) => {
+      if (item.report_date && item.report_date !== "ไม่ระบุวันที่") {
+        const dateObj = new Date(item.report_date.split("T")[0]);
+        if (!isNaN(dateObj.getTime())) {
+          const dayIndex = dateObj.getDay();
+          days[dayIndex].count++;
+        }
+      }
+    });
+
+    // Reorder to start with Monday
+    return [
+      days[1], days[2], days[3], days[4], days[5], days[6], days[0]
+    ];
+  }, [items]);
+
   // Custom Tooltip for PieChart
   const CustomPieTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
@@ -185,6 +231,7 @@ export default function ExecutiveAnalytics({
           <div className="flex-1 min-h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
+                <PlatformGradients />
                 <Pie
                   data={platformData}
                   cx="50%"
@@ -197,14 +244,15 @@ export default function ExecutiveAnalytics({
                   cornerRadius={6}
                 >
                   {platformData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.fillId} />
                   ))}
                 </Pie>
                 <Tooltip content={<CustomPieTooltip />} />
                 <Legend
                   verticalAlign="bottom"
-                  height={36}
-                  wrapperStyle={{ fontSize: "12px", fontWeight: 600 }}
+                  height={40}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: "13px", fontWeight: 700, color: "#4b5563" }}
                 />
               </PieChart>
             </ResponsiveContainer>
@@ -226,6 +274,7 @@ export default function ExecutiveAnalytics({
                 data={officeData}
                 margin={{ top: 20, right: 30, left: 0, bottom: 20 }}
               >
+                <PlatformGradients />
                 <CartesianGrid
                   strokeDasharray="3 3"
                   vertical={false}
@@ -250,27 +299,28 @@ export default function ExecutiveAnalytics({
                 />
                 <Legend
                   verticalAlign="top"
-                  height={36}
-                  wrapperStyle={{ fontSize: "11px", fontWeight: 600 }}
+                  height={40}
+                  iconType="circle"
+                  wrapperStyle={{ fontSize: "12px", fontWeight: 700, paddingBottom: "10px" }}
                 />
                 <Bar
                   dataKey="tiktok"
                   name="Tiktok"
                   stackId="a"
-                  fill={TIKTOK_DARK}
+                  fill="url(#gradTiktok)"
                   radius={[0, 0, 4, 4]}
                 />
                 <Bar
                   dataKey="shopee"
                   name="Shopee"
                   stackId="a"
-                  fill={PLATFORM_COLORS.shopee}
+                  fill="url(#gradShopee)"
                 />
                 <Bar
                   dataKey="lazada"
                   name="Lazada"
                   stackId="a"
-                  fill={PLATFORM_COLORS.lazada}
+                  fill="url(#gradLazada)"
                   radius={[6, 6, 0, 0]}
                 />
               </BarChart>
@@ -279,66 +329,136 @@ export default function ExecutiveAnalytics({
         </div>
       </div>
 
-      {/* Row 2: Top 10 Customers */}
-      <div className="group relative overflow-hidden bg-white dark:bg-[#161a24] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-all duration-300">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-violet-500/5 to-transparent rounded-bl-full" />
-        <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1">
-          10 อันดับลูกค้าที่พบปัญหา No Photo บ่อยที่สุด
-        </h3>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-          จัดอันดับเจ้าหน้าที่ที่มีประวัติไม่มีรูปถ่ายมากที่สุด
-        </p>
-        <div className="h-[400px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart
-              data={staffData}
-              layout="vertical"
-              margin={{ top: 20, right: 40, left: 40, bottom: 20 }}
-            >
-              <defs>
-                <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stopColor="#7c3aed" />
-                  <stop offset="100%" stopColor="#a78bfa" />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                horizontal={false}
-                stroke="#f0f0f0"
-              />
-              <XAxis
-                type="number"
-                tick={{ fill: "#9ca3af", fontSize: 11 }}
-                axisLine={false}
-                tickLine={false}
-              />
-              <YAxis
-                type="category"
-                dataKey="name"
-                tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 500 }}
-                axisLine={false}
-                tickLine={false}
-                width={140}
-              />
-              <Tooltip
-                cursor={{ fill: "rgba(124,58,237,0.04)" }}
-                contentStyle={tooltipStyle}
-                formatter={(value: any) => [`${value} ครั้ง`, "จำนวนที่พลาด"]}
-              />
-              <Bar
-                dataKey="count"
-                fill="url(#barGradient)"
-                radius={[0, 8, 8, 0]}
-                barSize={22}
-                label={{
-                  position: "right",
-                  fill: "#7c3aed",
-                  fontSize: 12,
-                  fontWeight: 700,
-                }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
+      {/* Row 2: Top 10 Customers & Day of Week */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top 10 Customers */}
+        <div className="group relative overflow-hidden bg-white dark:bg-[#161a24] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-violet-500/5 to-transparent rounded-bl-full" />
+          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1">
+            10 อันดับเจ้าหน้าที่ที่พบปัญหาบ่อยที่สุด
+          </h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+            จัดอันดับเจ้าหน้าที่ที่มีประวัติไม่มีรูปถ่ายมากที่สุด
+          </p>
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={staffData}
+                layout="vertical"
+                margin={{ top: 10, right: 40, left: 20, bottom: 10 }}
+              >
+                <defs>
+                  <linearGradient id="barGradient" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stopColor="#c4b5fd" />
+                    <stop offset="100%" stopColor="#8b5cf6" />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  horizontal={false}
+                  stroke="#f0f0f0"
+                />
+                <XAxis
+                  type="number"
+                  tick={{ fill: "#9ca3af", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  type="category"
+                  dataKey="name"
+                  tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 500 }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={140}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(124,58,237,0.06)" }}
+                  contentStyle={tooltipStyle}
+                  formatter={(value: any) => [`${value} ครั้ง`, "จำนวนที่พลาด"]}
+                />
+                <Bar
+                  dataKey="count"
+                  fill="url(#barGradient)"
+                  radius={[0, 10, 10, 0]}
+                  barSize={24}
+                  label={{
+                    position: "right",
+                    fill: "#7c3aed",
+                    fontSize: 13,
+                    fontWeight: 800,
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Day of Week Analysis */}
+        <div className="group relative overflow-hidden bg-white dark:bg-[#161a24] rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-lg transition-all duration-300">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-pink-500/5 to-transparent rounded-bl-full" />
+          <h3 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-1">
+            วิเคราะห์ตามวันในสัปดาห์ (Day of Week)
+          </h3>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+            ค้นหาวันที่มีความผิดพลาด No Photo เกิดขึ้นมากที่สุด
+          </p>
+          <div className="h-[350px] w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart
+                data={dayOfWeekData}
+                margin={{ top: 20, right: 20, left: 0, bottom: 10 }}
+              >
+                <defs>
+                  <linearGradient id="gradDay0" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fca5a5" /><stop offset="100%" stopColor="#ef4444" /></linearGradient>
+                  <linearGradient id="gradDay1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fef08a" /><stop offset="100%" stopColor="#eab308" /></linearGradient>
+                  <linearGradient id="gradDay2" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fbcfe8" /><stop offset="100%" stopColor="#ec4899" /></linearGradient>
+                  <linearGradient id="gradDay3" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#86efac" /><stop offset="100%" stopColor="#22c55e" /></linearGradient>
+                  <linearGradient id="gradDay4" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#fdba74" /><stop offset="100%" stopColor="#f97316" /></linearGradient>
+                  <linearGradient id="gradDay5" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#93c5fd" /><stop offset="100%" stopColor="#3b82f6" /></linearGradient>
+                  <linearGradient id="gradDay6" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#d8b4fe" /><stop offset="100%" stopColor="#a855f7" /></linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#f0f0f0"
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fill: "#9ca3af", fontSize: 12, fontWeight: 600 }}
+                  axisLine={false}
+                  tickLine={false}
+                  dy={10}
+                />
+                <YAxis
+                  tick={{ fill: "#9ca3af", fontSize: 11 }}
+                  axisLine={false}
+                  tickLine={false}
+                  dx={-10}
+                />
+                <Tooltip
+                  cursor={{ fill: "rgba(236,72,153,0.06)" }}
+                  contentStyle={tooltipStyle}
+                  formatter={(value: any) => [`${value} ครั้ง`, "จำนวน No Photo"]}
+                />
+                <Bar
+                  dataKey="count"
+                  radius={[8, 8, 0, 0]}
+                  barSize={45}
+                  label={{
+                    position: "top",
+                    fill: "#4b5563",
+                    fontSize: 13,
+                    fontWeight: 800,
+                  }}
+                >
+                  {dayOfWeekData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fillId} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         </div>
       </div>
     </div>
