@@ -277,51 +277,69 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                       {row.total}
                     </span>
                   </td>
-                  <td className="px-6 py-2 text-center">
+                  <td className="px-6 py-2 text-center align-middle">
                     <button
                       onClick={() =>
                         row.no_photo > 0 && setSelectedNoPhotoRow(row)
                       }
-                      className={`flex flex-col items-center gap-1.5 w-full p-2 rounded-lg transition-colors ${
+                      className={`group relative flex flex-col items-center justify-center w-full p-2.5 rounded-2xl transition-all duration-300 ${
                         row.no_photo > 0
-                          ? "hover:bg-red-50 dark:hover:bg-red-900/20 cursor-pointer"
+                          ? "hover:bg-red-50/80 dark:hover:bg-red-900/10 border border-transparent hover:border-red-100 dark:hover:border-red-900/30 cursor-pointer"
                           : "cursor-default"
                       }`}
                     >
-                      <span
-                        className={`inline-flex items-center justify-center px-3 py-1 rounded-full text-xs font-semibold ${
-                          row.no_photo > 0
-                            ? "bg-red-100 text-red-700 border border-red-200 dark:bg-red-900/40 dark:text-red-300 dark:border-red-800"
-                            : "text-gray-400"
-                        }`}
-                      >
-                        {row.no_photo > 0 ? row.no_photo : "-"}
-                      </span>
+                      {/* Main Badge */}
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span
+                          className={`inline-flex items-center justify-center min-w-[2.75rem] px-3 py-1.5 rounded-xl text-sm font-bold transition-all duration-300 ${
+                            row.no_photo > 0
+                              ? "bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-md shadow-red-500/20 group-hover:shadow-red-500/40 group-hover:scale-105 group-hover:-translate-y-0.5"
+                              : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                          }`}
+                        >
+                          {row.no_photo > 0 ? row.no_photo : "-"}
+                        </span>
+                        {row.no_photo > 0 && (
+                          <svg
+                            className="w-4 h-4 text-red-500 dark:text-red-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* Platform Breakdown */}
                       {row.no_photo > 0 && (
-                        <div className="flex items-center gap-1.5 text-[10px] mt-0.5">
+                        <div className="flex flex-wrap items-center justify-center gap-1.5 mt-2.5">
                           {row.no_photo_details.tiktok > 0 && (
-                            <span
-                              className="bg-black text-white px-1.5 py-0.5 rounded shadow-sm"
+                            <div
+                              className="flex items-center gap-1.5 bg-[#000000] text-white px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
                               title="Tiktok"
                             >
-                              T: {row.no_photo_details.tiktok}
-                            </span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#00f2fe] shadow-[0_0_4px_#00f2fe] animate-pulse"></span>
+                              Tiktok : {row.no_photo_details.tiktok}
+                            </div>
                           )}
                           {row.no_photo_details.shopee > 0 && (
-                            <span
-                              className="bg-[#ee4d2d] text-white px-1.5 py-0.5 rounded shadow-sm"
+                            <div
+                              className="flex items-center gap-1.5 bg-gradient-to-r from-[#ee4d2d] to-[#ff7337] text-white px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
                               title="Shopee"
                             >
-                              S: {row.no_photo_details.shopee}
-                            </span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-white shadow-[0_0_4px_#fff]"></span>
+                              Shopee : {row.no_photo_details.shopee}
+                            </div>
                           )}
                           {row.no_photo_details.lazada > 0 && (
-                            <span
-                              className="bg-[#0f146d] text-white px-1.5 py-0.5 rounded shadow-sm"
+                            <div
+                              className="flex items-center gap-1.5 bg-gradient-to-r from-[#0f146d] to-[#1a237e] text-white px-2 py-0.5 rounded-lg text-[10px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
                               title="Lazada"
                             >
-                              L: {row.no_photo_details.lazada}
-                            </span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-pink-400 shadow-[0_0_4px_#f472b6]"></span>
+                              Lazada : {row.no_photo_details.lazada}
+                            </div>
                           )}
                         </div>
                       )}
