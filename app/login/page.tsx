@@ -148,7 +148,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@email.com"
+                placeholder="gemini@email.com"
                 className="w-full pl-4 pr-12 py-3.5 bg-black/20 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50 transition-all text-sm"
               />
             </div>
@@ -269,7 +269,7 @@ export default function LoginPage() {
 
       {/* Footer text */}
       <div className="absolute bottom-6 text-xs text-gray-500 font-medium">
-        © {new Date().getFullYear()} Developed by Megamind
+        © {new Date().getFullYear()} พัฒนาโดย ส่วนระบบไปรษณีย์และสารสนเทศค่ะ
       </div>
     </div>
   );

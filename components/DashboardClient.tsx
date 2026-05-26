@@ -41,9 +41,11 @@ export default function DashboardClient({ isSetup }: DashboardClientProps) {
     return `${year}-${month}-${day}`;
   };
 
-  const [globalStartDate, setGlobalStartDate] =
-    useState<string>(getMonthStartString());
-  const [globalEndDate, setGlobalEndDate] = useState<string>(getMonthEndString());
+  const [globalStartDate, setGlobalStartDate] = useState<string>(
+    getMonthStartString(),
+  );
+  const [globalEndDate, setGlobalEndDate] =
+    useState<string>(getMonthEndString());
 
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState<any>(null);
@@ -242,7 +244,7 @@ export default function DashboardClient({ isSetup }: DashboardClientProps) {
                 ParcelFlow
               </h1>
               <p className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">
-                Reg 6 Dashboard
+                พัฒนาโดยเจ้าหน้าที่ รป. ท่านหนึ่งค่ะ
               </p>
             </div>
           )}
@@ -399,7 +401,7 @@ export default function DashboardClient({ isSetup }: DashboardClientProps) {
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-2">
             <div>
               <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 dark:text-white tracking-tight">
-                สวัสดีจ้า👋
+                สวัสดีค่ะส่วน รป.ปข.6 ขอต้อนรับสู่ Dashboard ParcelFlow ค่ะ👋
               </h2>
             </div>
           </div>
