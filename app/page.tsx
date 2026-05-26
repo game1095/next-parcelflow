@@ -12,38 +12,6 @@ export default async function Home() {
     process.env.NEXT_PUBLIC_SUPABASE_URL !== "your_supabase_url_here" &&
     process.env.NEXT_PUBLIC_SUPABASE_URL !== undefined;
 
-  let allFetchedData: any[] = [];
-  let error: any = null;
-
-  if (isSetup) {
-    let hasMore = true;
-    let page = 0;
-    const pageSize = 1000;
-
-    while (hasMore) {
-      const response = await supabase
-        .from("parcelFlow")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(page * pageSize, (page + 1) * pageSize - 1);
-
-      if (response.error) {
-        error = response.error;
-        break;
-      }
-
-      if (response.data && response.data.length > 0) {
-        allFetchedData = [...allFetchedData, ...response.data];
-        if (response.data.length < pageSize) {
-          hasMore = false;
-        } else {
-          page++;
-        }
-      } else {
-        hasMore = false;
-      }
-    }
-  }
   return (
     <AuthGuard>
       <div className="min-h-screen bg-[#f0f2f5] dark:bg-[#0c0e14]">
@@ -109,14 +77,7 @@ export default async function Home() {
             </div>
           )}
 
-          {/* Error State */}
-          {error && (
-            <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-5 rounded-2xl border border-red-100 dark:border-red-800/50 shadow-sm">
-              <strong>เกิดข้อผิดพลาดในการดึงข้อมูล:</strong> {error.message}
-            </div>
-          )}
-
-          <DashboardTabs rawData={allFetchedData} />
+          <DashboardTabs />
         </main>
       </div>
     </AuthGuard>
