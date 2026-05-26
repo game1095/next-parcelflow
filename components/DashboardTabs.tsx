@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import DataTable from "./DataTable";
 import NoPhotoNameTable from "./NoPhotoNameTable";
 import NoPhotoUserChart from "./NoPhotoUserChart";
 import ExecutiveAnalytics from "./ExecutiveAnalytics";
+import { PROVINCE_GROUPS } from "@/lib/constants";
+import { fetchDashboardData } from "@/app/actions";
 
-type DashboardTabsProps = {
-  rawData: any[];
-};
-
-export default function DashboardTabs({ rawData }: DashboardTabsProps) {
+export default function DashboardTabs() {
   const [activeTab, setActiveTab] = useState<
     "overview" | "nophoto" | "userchart"
   >("overview");
@@ -31,353 +29,55 @@ export default function DashboardTabs({ rawData }: DashboardTabsProps) {
     useState<string>(getTodayString());
   const [globalEndDate, setGlobalEndDate] = useState<string>(getTodayString());
 
-  const PROVINCE_GROUPS: Record<string, string[]> = useMemo(
-    () => ({
-      "ปจ.นครสวรรค์": [
-        "60000",
-        "60001",
-        "60002",
-        "60110",
-        "60120",
-        "60130",
-        "60140",
-        "60150",
-        "60160",
-        "60170",
-        "60180",
-        "60190",
-        "60210",
-        "60220",
-        "60230",
-        "60240",
-        "60250",
-        "60260",
-        "428",
-      ],
-      "ปจ.อุทัยธานี": [
-        "61000",
-        "61110",
-        "61120",
-        "61130",
-        "61140",
-        "61150",
-        "61160",
-        "61170",
-        "61180",
-      ],
-      "ปจ.กำแพงเพชร": [
-        "62000",
-        "62110",
-        "62120",
-        "62130",
-        "62140",
-        "62150",
-        "62160",
-        "62170",
-        "62180",
-        "62190",
-        "62210",
-        "89",
-      ],
-      "ปจ.ตาก": [
-        "63000",
-        "63110",
-        "63111",
-        "63120",
-        "63130",
-        "63140",
-        "63150",
-        "63160",
-        "63170",
-        "63180",
-        "58",
-        "154",
-      ],
-      "ปจ.สุโขทัย": [
-        "64000",
-        "64110",
-        "64120",
-        "64130",
-        "64140",
-        "64150",
-        "64160",
-        "64170",
-        "64180",
-        "64190",
-        "64210",
-        "64220",
-        "64230",
-      ],
-      "ปจ.พิษณุโลก": [
-        "65000",
-        "65001",
-        "65110",
-        "65120",
-        "65130",
-        "65140",
-        "65150",
-        "65160",
-        "65170",
-        "65180",
-        "65190",
-        "65210",
-        "65220",
-        "65230",
-        "65240",
-        "36",
-        "61",
-        "112",
-        "287",
-        "303",
-      ],
-      "ปจ.พิจิตร": [
-        "66000",
-        "66110",
-        "66120",
-        "66130",
-        "66140",
-        "66150",
-        "66160",
-        "66170",
-        "66180",
-        "66190",
-        "66210",
-        "66220",
-        "66230",
-      ],
-      "ปจ.เพชรบูรณ์": [
-        "67000",
-        "67110",
-        "67120",
-        "67130",
-        "67140",
-        "67150",
-        "67160",
-        "67170",
-        "67180",
-        "67190",
-        "67210",
-        "67220",
-        "67230",
-        "67240",
-        "67250",
-        "67260",
-        "67270",
-        "67280",
-      ],
-    }),
-    [],
-  );
+  const [isLoading, setIsLoading] = useState(true);
+  const [dashboardData, setDashboardData] = useState<any>(null);
 
-  const {
-    summaryData,
-    noPhotoNameData,
-    noPhotoRawItems,
-    monthNoPhotoItems,
-    kpiData,
-  } = useMemo(() => {
-    let filteredData = rawData;
-
-    // 1. Apply Global Platform Filter
-    if (globalPlatform !== "all") {
-      filteredData = filteredData.filter((row) => {
-        const platform = (row.file_key || "").toLowerCase();
-        return platform === globalPlatform;
-      });
+  useEffect(() => {
+    async function loadData() {
+      setIsLoading(true);
+      try {
+        const data = await fetchDashboardData(
+          globalStartDate,
+          globalEndDate,
+          globalPlatform,
+          globalProvince
+        );
+        setDashboardData(data);
+      } catch (error) {
+        console.error("Failed to load dashboard data:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
+    loadData();
+  }, [globalPlatform, globalProvince, globalStartDate, globalEndDate]);
 
-    // 2. Apply Global Province Filter
-    if (globalProvince !== "all") {
-      const allowedPostCodes = PROVINCE_GROUPS[globalProvince] || [];
-      filteredData = filteredData.filter((row) => {
-        return allowedPostCodes.includes(row.post_code?.toString());
-      });
-    }
-
-    const baseFilteredData = filteredData;
-
-    // Extract Month No Photo Items (ignores the exact day range, uses the month of globalStartDate)
-    const targetMonth = globalStartDate
-      ? globalStartDate.substring(0, 7)
-      : getTodayString().substring(0, 7);
-    const monthItems: any[] = [];
-
-    baseFilteredData.forEach((row) => {
-      if (row.report_date && row.report_date.startsWith(targetMonth)) {
-        const status = (row.status || "").toLowerCase().trim();
-        if (
-          status.includes("no photo") ||
-          status.includes("nophoto") ||
-          status === "no photo" ||
-          status === "nophoto"
-        ) {
-          monthItems.push({
-            barcode: row.barcode || "-",
-            user_name: row.user_name || "-",
-            name:
-              row.name && row.name.trim() !== "-"
-                ? row.name
-                : "ไม่ระบุชื่อเจ้าหน้าที่",
-            file_key: row.file_key || "Unknown",
-            office: row.office || "ไม่ระบุ",
-            report_date: row.report_date,
-          });
-        }
-      }
-    });
-
-    // 3. Apply Global Date Range Filter for Tables & KPIs
-    if (globalStartDate || globalEndDate) {
-      filteredData = filteredData.filter((row) => {
-        if (!row.report_date) return false;
-        const rowDate = row.report_date.split("T")[0];
-        let isValid = true;
-        if (globalStartDate && rowDate < globalStartDate) isValid = false;
-        if (globalEndDate && rowDate > globalEndDate) isValid = false;
-        return isValid;
-      });
-    }
-
-    // 3. Aggregate Filtered Data
-    const summaryMap: Record<string, any> = {};
-    const noPhotoNameSummary: Record<string, any> = {};
-    const rawItems: any[] = [];
-
-    let totalParcels = filteredData.length;
-    let totalNoPhoto = 0;
-
-    filteredData.forEach((row) => {
-      const office = row.office || "ไม่ระบุ";
-      const post_code = row.post_code || "ไม่ระบุ";
-      const key = `${office}_${post_code}`;
-
-      if (!summaryMap[key]) {
-        summaryMap[key] = {
-          office,
-          post_code,
-          total: 0,
-          no_photo: 0,
-          no_photo_details: { tiktok: 0, shopee: 0, lazada: 0, other: 0 },
-          no_photo_items: [],
-          waiting: 0,
-          completed: 0,
-          report_date: row.report_date || null,
-        };
-      } else if (!summaryMap[key].report_date && row.report_date) {
-        summaryMap[key].report_date = row.report_date;
-      } else if (
-        row.report_date &&
-        summaryMap[key].report_date &&
-        new Date(row.report_date) > new Date(summaryMap[key].report_date)
-      ) {
-        summaryMap[key].report_date = row.report_date;
-      }
-
-      summaryMap[key].total++;
-
-      const status = (row.status || "").toLowerCase().trim();
-
-      if (
-        status.includes("no photo") ||
-        status.includes("nophoto") ||
-        status === "no photo" ||
-        status === "nophoto"
-      ) {
-        summaryMap[key].no_photo++;
-        totalNoPhoto++;
-
-        const platform = (row.file_key || "").toLowerCase();
-        if (platform === "tiktok") summaryMap[key].no_photo_details.tiktok++;
-        else if (platform === "shopee")
-          summaryMap[key].no_photo_details.shopee++;
-        else if (platform === "lazada")
-          summaryMap[key].no_photo_details.lazada++;
-        else summaryMap[key].no_photo_details.other++;
-
-        summaryMap[key].no_photo_items.push({
-          barcode: row.barcode || "-",
-          user_name: row.user_name || "-",
-          name: row.name || "-",
-          file_key: row.file_key || "Unknown",
-          office: row.office || "ไม่ระบุ",
-          report_date: row.report_date || null,
-        });
-
-        const customerName = row.name || "ไม่ระบุชื่อ";
-        if (!noPhotoNameSummary[customerName]) {
-          noPhotoNameSummary[customerName] = {
-            name: customerName,
-            count: 0,
-            offices: new Set(),
-            items: [],
-          };
-        }
-        noPhotoNameSummary[customerName].count++;
-        noPhotoNameSummary[customerName].offices.add(row.office || "ไม่ระบุ");
-
-        const itemObj = {
-          barcode: row.barcode || "-",
-          user_name: row.user_name || "-",
-          name: customerName,
-          file_key: row.file_key || "Unknown",
-          office: row.office || "ไม่ระบุ",
-          report_date: row.report_date || null,
-        };
-
-        noPhotoNameSummary[customerName].items.push(itemObj);
-        rawItems.push(itemObj);
-      } else if (status === "waiting" || status.includes("waiting")) {
-        summaryMap[key].waiting++;
-      } else if (status === "completed" || status.includes("completed")) {
-        summaryMap[key].completed++;
-      }
-    });
-
-    const errorRate =
-      totalParcels > 0
-        ? ((totalNoPhoto / totalParcels) * 100).toFixed(2)
-        : "0.00";
-
-    let maxOffice = "ไม่มีข้อมูล";
-    let maxCount = 0;
-    Object.values(summaryMap).forEach((val: any) => {
-      if (val.no_photo > maxCount) {
-        maxCount = val.no_photo;
-        maxOffice = val.office;
-      }
-    });
-
-    return {
-      summaryData: Object.values(summaryMap).sort(
-        (a, b) => b.no_photo - a.no_photo,
-      ),
-      noPhotoNameData: Object.values(noPhotoNameSummary)
-        .map((item: any) => ({
-          ...item,
-          offices: Array.from(item.offices),
-        }))
-        .sort((a: any, b: any) => b.count - a.count),
-      noPhotoRawItems: rawItems,
-      monthNoPhotoItems: monthItems,
-      kpiData: {
-        totalParcels,
-        totalNoPhoto,
-        errorRate,
-        mostProblematicOffice: maxOffice,
-        maxOfficeCount: maxCount,
-      },
-    };
-  }, [
-    rawData,
-    globalPlatform,
-    globalProvince,
-    globalStartDate,
-    globalEndDate,
-    PROVINCE_GROUPS,
-  ]);
+  const summaryData = dashboardData?.summaryData || [];
+  const noPhotoNameData = dashboardData?.noPhotoNameData || [];
+  const noPhotoRawItems = dashboardData?.noPhotoRawItems || [];
+  const monthNoPhotoItems = dashboardData?.monthNoPhotoItems || [];
+  const kpiData = dashboardData?.kpiData || {
+    totalParcels: 0,
+    totalNoPhoto: 0,
+    errorRate: "0.00",
+    mostProblematicOffice: "ไม่มีข้อมูล",
+    maxOfficeCount: 0,
+  };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Loading Overlay */}
+      {isLoading && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-[#161a24]/50 backdrop-blur-sm rounded-3xl">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-10 h-10 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin"></div>
+            <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">
+              กำลังโหลดข้อมูล...
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Global Control Bar */}
       <div className="backdrop-blur-xl bg-white/80 dark:bg-[#161a24]/80 p-5 rounded-2xl shadow-sm border border-gray-200/60 dark:border-gray-700/60 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-3 text-gray-800 dark:text-gray-200">
@@ -625,7 +325,7 @@ export default function DashboardTabs({ rawData }: DashboardTabsProps) {
       </div>
 
       {/* Tabs Navigation */}
-      <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#161a24] rounded-2xl p-2 border border-gray-100 dark:border-gray-800 shadow-sm">
+      <div className="flex flex-wrap gap-1.5 bg-white dark:bg-[#161a24] rounded-2xl p-2 border border-gray-100 dark:border-gray-800 shadow-sm relative z-10">
         <button
           onClick={() => setActiveTab("overview")}
           className={`flex items-center gap-2 py-3 px-5 text-sm font-semibold rounded-xl transition-all duration-200 ${activeTab === "overview" ? "bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-lg shadow-indigo-500/25" : "text-gray-500 hover:text-gray-800 hover:bg-gray-50 dark:text-gray-400 dark:hover:text-gray-200 dark:hover:bg-gray-800"}`}
@@ -686,7 +386,7 @@ export default function DashboardTabs({ rawData }: DashboardTabsProps) {
       </div>
 
       {/* Tab Content */}
-      <main className="bg-white dark:bg-[#161a24] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-1 mt-2">
+      <main className="bg-white dark:bg-[#161a24] rounded-2xl shadow-sm border border-gray-100 dark:border-gray-800 p-1 mt-2 relative z-10 min-h-[400px]">
         {activeTab === "overview" && <DataTable data={summaryData} />}
         {activeTab === "nophoto" && <NoPhotoNameTable data={noPhotoNameData} />}
         {activeTab === "userchart" && (

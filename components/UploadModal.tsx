@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import * as XLSX from "xlsx";
 import { supabase } from "@/lib/supabase";
+import Swal from "sweetalert2";
 
 export default function UploadModal() {
   const [isOpen, setIsOpen] = useState(false);
@@ -41,7 +42,29 @@ export default function UploadModal() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsUploading(true);
+    
+    // Check if files are selected
+    const hasFiles = Object.values(files).some(file => file !== null);
+    if (!hasFiles) {
+      Swal.fire({
+        title: "เกิดข้อผิดพลาด",
+        text: "โปรดเลือกไฟล์อย่างน้อย 1 แพลตฟอร์ม",
+        icon: "warning",
+        confirmButtonColor: "#4f46e5",
+      });
+      return;
+    }
+
+    setIsOpen(false); // Close the modal to show the full-screen loading alert
+    
+    Swal.fire({
+      title: 'กำลังประมวลผลข้อมูล...',
+      html: 'โปรดรอสักครู่ ระบบกำลังอ่านไฟล์และอัปโหลดข้อมูล',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
 
     try {
       // Check if data for this date already exists
@@ -54,8 +77,12 @@ export default function UploadModal() {
       if (checkError) throw checkError;
 
       if (existingData && existingData.length > 0) {
-        alert(`มีข้อมูลรายงานประจำวันที่ ${reportDate} อยู่ในระบบแล้ว ไม่สามารถอัปโหลดซ้ำได้ครับ`);
-        setIsUploading(false);
+        Swal.fire({
+          title: "ข้อมูลซ้ำซ้อน",
+          text: `มีข้อมูลรายงานประจำวันที่ ${reportDate} อยู่ในระบบแล้ว ไม่สามารถอัปโหลดซ้ำได้ครับ`,
+          icon: "warning",
+          confirmButtonColor: "#4f46e5",
+        }).then(() => setIsOpen(true));
         return;
       }
 
@@ -95,27 +122,39 @@ export default function UploadModal() {
       }
 
       if (allRecords.length === 0) {
-        alert("ไม่พบข้อมูลที่จะอัปโหลด หรือไฟล์ไม่ได้เลือก โปรดตรวจสอบไฟล์ Excel");
-        setIsUploading(false);
+        Swal.fire({
+          title: "ไม่พบข้อมูล",
+          text: "ไฟล์ที่เลือกไม่มีข้อมูลที่ถูกต้อง โปรดตรวจสอบไฟล์ Excel อีกครั้ง",
+          icon: "error",
+          confirmButtonColor: "#4f46e5",
+        }).then(() => setIsOpen(true));
         return;
       }
 
-      // Insert to Supabase in batches if necessary, but try all at once first
+      // Insert to Supabase
       const { error } = await supabase.from('parcelFlow').insert(allRecords);
 
       if (error) {
         throw error;
       }
 
-      alert(`อัปโหลดและประมวลผลข้อมูลสำเร็จจำนวน ${allRecords.length} รายการ!`);
-      setIsOpen(false);
-      window.location.reload(); // Refresh to show new data
+      Swal.fire({
+        title: "อัปโหลดสำเร็จ!",
+        text: `บันทึกข้อมูลเข้าระบบจำนวน ${allRecords.length.toLocaleString()} รายการเรียบร้อยแล้ว`,
+        icon: "success",
+        confirmButtonColor: "#4f46e5",
+      }).then(() => {
+        window.location.reload(); // Refresh to show new data
+      });
       
     } catch (error: any) {
       console.error("Error uploading:", error);
-      alert("เกิดข้อผิดพลาดในการอัปโหลด: " + error.message);
-    } finally {
-      setIsUploading(false);
+      Swal.fire({
+        title: "เกิดข้อผิดพลาด",
+        text: `ไม่สามารถอัปโหลดข้อมูลได้: ${error.message}`,
+        icon: "error",
+        confirmButtonColor: "#4f46e5",
+      }).then(() => setIsOpen(true));
     }
   };
 
