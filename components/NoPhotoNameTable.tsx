@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect, useEffect as useReactEffect } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  useEffect as useReactEffect,
+} from "react";
 import { createPortal } from "react-dom";
 
 type NoPhotoItem = {
@@ -274,7 +279,9 @@ export default function NoPhotoNameTable({ data }: { data: NoPhotoNameRow[] }) {
                             d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"
                           />
                         </svg>
-                        <span className="text-[10px] font-semibold">ดีขึ้น</span>
+                        <span className="text-[10px] font-semibold">
+                          ดีขึ้น
+                        </span>
                       </div>
                     )}
                     {row.trend === "stable" && (
@@ -389,192 +396,247 @@ export default function NoPhotoNameTable({ data }: { data: NoPhotoNameRow[] }) {
       </div>
 
       {/* Modal for No Photo Details by Name */}
-      {mounted && selectedRow && (() => {
-        // Group items by date
-        const groups: Record<string, NoPhotoItem[]> = {};
-        selectedRow.items.forEach(item => {
-          const dateStr = item.report_date ? item.report_date.split('T')[0] : 'ไม่ระบุวันที่';
-          if (!groups[dateStr]) groups[dateStr] = [];
-          groups[dateStr].push(item);
-        });
-        
-        const sortedDates = Object.keys(groups).sort((a, b) => {
-          if (a === 'ไม่ระบุวันที่') return 1;
-          if (b === 'ไม่ระบุวันที่') return -1;
-          return new Date(b).getTime() - new Date(a).getTime();
-        });
+      {mounted &&
+        selectedRow &&
+        (() => {
+          // Group items by date
+          const groups: Record<string, NoPhotoItem[]> = {};
+          selectedRow.items.forEach((item) => {
+            const dateStr = item.report_date
+              ? item.report_date.split("T")[0]
+              : "ไม่ระบุวันที่";
+            if (!groups[dateStr]) groups[dateStr] = [];
+            groups[dateStr].push(item);
+          });
 
-        return createPortal(
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm modal-active"
-          onClick={() => setSelectedRow(null)}
-        >
-          <div
-            className="bg-gray-50 dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="p-5 sm:px-8 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 relative">
-              <div className="flex items-center gap-4 w-full">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/40 dark:to-orange-900/40 flex items-center justify-center border border-red-100 dark:border-red-800 shrink-0 shadow-inner">
-                  <svg className="w-7 h-7 text-red-600 dark:text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0 pr-8 sm:pr-0">
-                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-1 truncate">
-                    ประวัติ No Photo: <span className="text-indigo-600 dark:text-indigo-400">{selectedRow.name}</span>
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-md">
-                      รวมทั้งหมด {selectedRow.count} ครั้ง
-                    </span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="truncate max-w-[200px] sm:max-w-md font-medium" title={selectedRow.offices.join(', ')}>
-                      {selectedRow.offices.join(', ')}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedRow(null)}
-                className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 absolute sm:static top-5 right-5 bg-white dark:bg-gray-800 sm:bg-transparent shadow-sm sm:shadow-none border border-gray-100 dark:border-gray-700 sm:border-transparent"
-                title="ปิดหน้าต่าง"
+          Object.keys(groups).forEach((date) => {
+            groups[date].sort((a, b) =>
+              (a.user_name || "").localeCompare(b.user_name || "")
+            );
+          });
+
+          const sortedDates = Object.keys(groups).sort((a, b) => {
+            if (a === "ไม่ระบุวันที่") return 1;
+            if (b === "ไม่ระบุวันที่") return -1;
+            return new Date(b).getTime() - new Date(a).getTime();
+          });
+
+          return createPortal(
+            <div
+              className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm modal-active"
+              onClick={() => setSelectedRow(null)}
+            >
+              <div
+                className="bg-gray-50 dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700"
+                onClick={(e) => e.stopPropagation()}
               >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-4 sm:p-6 overflow-y-auto flex-1 relative scroll-smooth">
-              {sortedDates.length > 0 ? (
-                <div className="space-y-8 pb-4">
-                  {sortedDates.map(date => (
-                    <div key={date} className="relative">
-                      {/* Date Header */}
-                      <div className="relative flex items-center gap-3 mb-4 bg-gray-50/95 dark:bg-gray-900/95 py-2.5 px-2 -mx-2 rounded-xl border border-transparent">
-                        <div className="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full shadow-sm"></div>
-                        <h4 className="font-extrabold text-gray-800 dark:text-gray-100 text-lg tracking-tight">
-                          {date === 'ไม่ระบุวันที่' 
-                            ? date 
-                            : new Date(date).toLocaleDateString("th-TH", { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </h4>
-                        <div className="flex-1 border-t border-dashed border-gray-300 dark:border-gray-700 mx-2"></div>
-                        <span className="text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full shadow-sm">
-                          {groups[date].length} รายการ
+                {/* Modal Header */}
+                <div className="p-5 sm:px-8 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 relative">
+                  <div className="flex items-center gap-4 w-full">
+                    <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-900/40 dark:to-orange-900/40 flex items-center justify-center border border-red-100 dark:border-red-800 shrink-0 shadow-inner">
+                      <svg
+                        className="w-7 h-7 text-red-600 dark:text-red-400"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                        />
+                      </svg>
+                    </div>
+                    <div className="flex-1 min-w-0 pr-8 sm:pr-0">
+                      <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-1 truncate">
+                        ประวัติ No Photo:{" "}
+                        <span className="text-indigo-600 dark:text-indigo-400">
+                          {selectedRow.name}
+                        </span>
+                      </h3>
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-md">
+                          รวมทั้งหมด {selectedRow.count} ครั้ง
+                        </span>
+                        <span className="hidden sm:inline">•</span>
+                        <span
+                          className="truncate max-w-[200px] sm:max-w-md font-medium"
+                          title={selectedRow.offices.join(", ")}
+                        >
+                          {selectedRow.offices.join(", ")}
                         </span>
                       </div>
-                      
-                      {/* Grid of Items */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {groups[date].map((item, idx) => {
-                          const platform = item.file_key.toLowerCase();
-                          let bgClass = "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
-                          let borderClass = "border-gray-200 dark:border-gray-700 hover:border-gray-300";
-                          let leftLineClass = "bg-gray-300 dark:bg-gray-600";
-                          
-                          if (platform === "tiktok") {
-                            bgClass = "bg-black text-white";
-                            leftLineClass = "bg-black dark:bg-gray-400";
-                          } else if (platform === "shopee") {
-                            bgClass = "bg-[#ee4d2d] text-white";
-                            leftLineClass = "bg-[#ee4d2d]";
-                          } else if (platform === "lazada") {
-                            bgClass = "bg-[#0f146d] text-white";
-                            leftLineClass = "bg-[#0f146d] dark:bg-blue-400";
-                          }
-
-                          return (
-                            <div
-                              key={idx}
-                              className={`bg-white dark:bg-gray-800 border ${borderClass} rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col gap-3 relative group overflow-hidden`}
-                            >
-                              {/* Left Edge Decoration */}
-                              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${leftLineClass} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
-                              
-                              <div className="flex justify-between items-start gap-3 pl-1.5">
-                                <div className="flex-1 min-w-0">
-                                  <a
-                                    href={`https://qms.thailandpost.com/Web/Tracking/singleTracking.aspx?type=item&id=${item.barcode}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-mono font-black text-gray-900 dark:text-white text-lg hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline flex items-center gap-1.5 transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate"
-                                    title="คลิกเพื่อตรวจสอบสถานะพัสดุ"
-                                  >
-                                    {item.barcode}
-                                    <svg
-                                      className="w-4 h-4 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all text-indigo-500 shrink-0"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                  </a>
-                                </div>
-                                <span className={`inline-flex justify-center shrink-0 min-w-[75px] text-[11px] px-3 py-1.5 rounded-lg shadow-sm font-bold tracking-wider uppercase ${bgClass}`}>
-                                  {item.file_key || "Unknown"}
-                                </span>
-                              </div>
-                              
-                              <div className="pl-1.5 flex flex-col gap-2.5 mt-1 border-t border-gray-100 dark:border-gray-700/50 pt-3">
-                                <div className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300">
-                                  <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                                    <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                  </div>
-                                  <span className="font-semibold text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-700/50 px-2.5 py-0.5 rounded-md truncate">
-                                    {item.office}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300">
-                                  <div className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                                    <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                  </div>
-                                  <span className="truncate font-medium" title={item.user_name}>
-                                    ID: <span className="text-gray-900 dark:text-gray-100">{item.user_name || "-"}</span>
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
                     </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400">
-                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-5">
-                    <svg className="w-10 h-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
                   </div>
-                  <p className="text-xl font-bold text-gray-700 dark:text-gray-300">ไม่มีรายละเอียดข้อมูล</p>
-                  <p className="text-sm mt-2 text-gray-400">ไม่พบประวัติ No Photo สำหรับเจ้าหน้าที่รายนี้</p>
+                  <button
+                    onClick={() => setSelectedRow(null)}
+                    className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 absolute sm:static top-5 right-5 bg-white dark:bg-gray-800 sm:bg-transparent shadow-sm sm:shadow-none border border-gray-100 dark:border-gray-700 sm:border-transparent"
+                    title="ปิดหน้าต่าง"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2.5}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
                 </div>
-              )}
-            </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 flex justify-end">
-              <button
-                onClick={() => setSelectedRow(null)}
-                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
-              >
-                <span>ปิดหน้าต่าง</span>
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-        );
-      })()}
+                {/* Modal Body */}
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1 relative scroll-smooth">
+                  {sortedDates.length > 0 ? (
+                    <div className="space-y-8 pb-4">
+                      {sortedDates.map((date) => (
+                        <div key={date} className="relative">
+                          {/* Date Header */}
+                          <div className="relative flex items-center gap-3 mb-4 bg-gray-50/95 dark:bg-gray-900/95 py-2.5 px-2 -mx-2 rounded-xl border border-transparent">
+                            <div className="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full shadow-sm"></div>
+                            <h4 className="font-extrabold text-gray-800 dark:text-gray-100 text-lg tracking-tight">
+                              {date === "ไม่ระบุวันที่"
+                                ? date
+                                : new Date(date).toLocaleDateString("th-TH", {
+                                    year: "numeric",
+                                    month: "long",
+                                    day: "numeric",
+                                  })}
+                            </h4>
+                            <div className="flex-1 border-t border-dashed border-gray-300 dark:border-gray-700 mx-2"></div>
+                            <span className="text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full shadow-sm">
+                              {groups[date].length} รายการ
+                            </span>
+                          </div>
+
+                          {/* Table of Items */}
+                          <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm mt-3">
+                            <table className="w-full text-left text-sm whitespace-nowrap">
+                              <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                <tr>
+                                  <th className="px-4 py-3 font-medium">
+                                    บาร์โค้ด (Barcode)
+                                  </th>
+                                  <th className="px-4 py-3 font-medium text-center">
+                                    แพลตฟอร์ม
+                                  </th>
+                                  <th className="px-4 py-3 font-medium">
+                                    ที่ทำการ
+                                  </th>
+                                  <th className="px-4 py-3 font-medium text-center">
+                                    ID
+                                  </th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                                {groups[date].map((item, idx) => {
+                                  const platform = item.file_key.toLowerCase();
+                                  let bgClass =
+                                    "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+
+                                  if (platform === "tiktok")
+                                    bgClass = "bg-black text-white";
+                                  else if (platform === "shopee")
+                                    bgClass = "bg-[#ee4d2d] text-white";
+                                  else if (platform === "lazada")
+                                    bgClass = "bg-[#0f146d] text-white";
+
+                                  return (
+                                    <tr
+                                      key={idx}
+                                      className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                                    >
+                                      <td className="px-4 py-3">
+                                        <a
+                                          href={`https://qms.thailandpost.com/Web/Tracking/singleTracking.aspx?type=item&id=${item.barcode}`}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="font-mono font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1.5"
+                                        >
+                                          {item.barcode}
+                                          <svg
+                                            className="w-3.5 h-3.5"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2.5}
+                                              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                            />
+                                          </svg>
+                                        </a>
+                                      </td>
+                                      <td className="px-4 py-3 text-center">
+                                        <span
+                                          className={`inline-flex justify-center min-w-[75px] text-[10px] px-2.5 py-1 rounded-md font-bold tracking-wider uppercase ${bgClass}`}
+                                        >
+                                          {item.file_key || "Unknown"}
+                                        </span>
+                                      </td>
+                                      <td className="px-4 py-3 text-gray-700 dark:text-gray-300 font-medium">
+                                        {item.office || "-"}
+                                      </td>
+                                      <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300 font-medium">
+                                        {item.user_name || "-"}
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="h-full flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400">
+                      <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-5">
+                        <svg
+                          className="w-10 h-10 text-gray-400 dark:text-gray-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={1.5}
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                        ไม่มีรายละเอียดข้อมูล
+                      </p>
+                      <p className="text-sm mt-2 text-gray-400">
+                        ไม่พบประวัติ No Photo สำหรับเจ้าหน้าที่รายนี้
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Modal Footer */}
+                <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 flex justify-end">
+                  <button
+                    onClick={() => setSelectedRow(null)}
+                    className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
+                  >
+                    <span>ปิดหน้าต่าง</span>
+                  </button>
+                </div>
+              </div>
+            </div>,
+            document.body,
+          );
+        })()}
     </div>
   );
 }

@@ -1,6 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect, useEffect as useReactEffect } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  useEffect as useReactEffect,
+} from "react";
 import { createPortal } from "react-dom";
 
 type NoPhotoItem = {
@@ -24,6 +29,13 @@ type SummaryRow = {
   };
   no_photo_items: NoPhotoItem[];
   waiting: number;
+  waiting_details?: {
+    tiktok: number;
+    shopee: number;
+    lazada: number;
+    other: number;
+  };
+  waiting_items?: NoPhotoItem[];
   completed: number;
   report_date: string | null;
 };
@@ -39,6 +51,8 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
   const pageSize = 10;
 
   const [selectedNoPhotoRow, setSelectedNoPhotoRow] =
+    useState<SummaryRow | null>(null);
+  const [selectedWaitingRow, setSelectedWaitingRow] =
     useState<SummaryRow | null>(null);
   const [mounted, setMounted] = useState(false);
 
@@ -81,9 +95,47 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                 month: "long",
                 day: "numeric",
               }),
-        items: groups[dateKey],
+        items: groups[dateKey].sort((a, b) =>
+          (a.user_name || "").localeCompare(b.user_name || ""),
+        ),
       }));
   }, [selectedNoPhotoRow]);
+
+  // Group Waiting Items for Modal
+  const groupedWaitingItems = useMemo(() => {
+    if (!selectedWaitingRow?.waiting_items) return [];
+
+    // Group by raw date string
+    const groups: Record<string, NoPhotoItem[]> = {};
+    selectedWaitingRow.waiting_items.forEach((item) => {
+      const rawDate = item.report_date
+        ? item.report_date.split("T")[0]
+        : "ไม่ระบุวันที่";
+      if (!groups[rawDate]) groups[rawDate] = [];
+      groups[rawDate].push(item);
+    });
+
+    // Sort groups descending (newest first)
+    return Object.keys(groups)
+      .sort((a, b) => {
+        if (a === "ไม่ระบุวันที่") return 1;
+        if (b === "ไม่ระบุวันที่") return -1;
+        return b.localeCompare(a);
+      })
+      .map((dateKey) => ({
+        date:
+          dateKey === "ไม่ระบุวันที่"
+            ? "ไม่ระบุวันที่"
+            : new Date(dateKey).toLocaleDateString("th-TH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              }),
+        items: groups[dateKey].sort((a, b) =>
+          (a.user_name || "").localeCompare(b.user_name || ""),
+        ),
+      }));
+  }, [selectedWaitingRow]);
 
   // Sorting and Filtering Logic
   const filteredAndSortedData = useMemo(() => {
@@ -312,7 +364,12 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                             viewBox="0 0 24 24"
                             stroke="currentColor"
                           >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2.5}
+                              d="M9 5l7 7-7 7"
+                            />
                           </svg>
                         )}
                       </div>
@@ -351,16 +408,78 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
                       )}
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-center">
-                    <span
-                      className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                  <td className="px-4 py-2 text-center align-middle">
+                    <button
+                      onClick={() =>
+                        row.waiting > 0 && setSelectedWaitingRow(row)
+                      }
+                      className={`group relative flex flex-col items-center justify-center w-full p-2 rounded-2xl transition-all duration-300 ${
                         row.waiting > 0
-                          ? "bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
-                          : "text-gray-400"
+                          ? "hover:bg-amber-50/80 dark:hover:bg-amber-900/10 border border-transparent hover:border-amber-100 dark:hover:border-amber-900/30 cursor-pointer"
+                          : "cursor-default"
                       }`}
                     >
-                      {row.waiting > 0 ? row.waiting : "-"}
-                    </span>
+                      {/* Main Badge */}
+                      <div className="flex items-center justify-center gap-1.5">
+                        <span
+                          className={`inline-flex items-center justify-center min-w-[2.5rem] px-3 py-1 rounded-lg text-sm font-bold transition-all duration-300 ${
+                            row.waiting > 0
+                              ? "bg-gradient-to-br from-amber-400 to-amber-600 text-white shadow-md shadow-amber-500/20 group-hover:shadow-amber-500/40 group-hover:scale-105 group-hover:-translate-y-0.5"
+                              : "bg-gray-100 text-gray-400 dark:bg-gray-800 dark:text-gray-500"
+                          }`}
+                        >
+                          {row.waiting > 0 ? row.waiting : "-"}
+                        </span>
+                        {row.waiting > 0 && (
+                          <svg
+                            className="w-4 h-4 text-amber-500 dark:text-amber-400 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2.5}
+                              d="M9 5l7 7-7 7"
+                            />
+                          </svg>
+                        )}
+                      </div>
+
+                      {/* Platform Breakdown */}
+                      {row.waiting > 0 && row.waiting_details && (
+                        <div className="flex flex-wrap items-center justify-center gap-1 mt-2">
+                          {row.waiting_details.tiktok > 0 && (
+                            <div
+                              className="flex items-center gap-1 bg-[#000000] text-white px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
+                              title="Tiktok"
+                            >
+                              <span className="w-1 h-1 rounded-full bg-[#00f2fe] shadow-[0_0_4px_#00f2fe] animate-pulse"></span>
+                              Tiktok : {row.waiting_details.tiktok}
+                            </div>
+                          )}
+                          {row.waiting_details.shopee > 0 && (
+                            <div
+                              className="flex items-center gap-1 bg-gradient-to-r from-[#ee4d2d] to-[#ff7337] text-white px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
+                              title="Shopee"
+                            >
+                              <span className="w-1 h-1 rounded-full bg-white shadow-[0_0_4px_#fff]"></span>
+                              Shopee : {row.waiting_details.shopee}
+                            </div>
+                          )}
+                          {row.waiting_details.lazada > 0 && (
+                            <div
+                              className="flex items-center gap-1 bg-gradient-to-r from-[#0f146d] to-[#1a237e] text-white px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wider shadow-sm group-hover:scale-105 transition-transform duration-300"
+                              title="Lazada"
+                            >
+                              <span className="w-1 h-1 rounded-full bg-pink-400 shadow-[0_0_4px_#f472b6]"></span>
+                              Lazada : {row.waiting_details.lazada}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </button>
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span
@@ -438,173 +557,418 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
         )}
       </div>
       {/* Modal for No Photo Details */}
-      {mounted && selectedNoPhotoRow && createPortal(
-        <div
-          className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm modal-active"
-          onClick={() => setSelectedNoPhotoRow(null)}
-        >
+      {mounted &&
+        selectedNoPhotoRow &&
+        createPortal(
           <div
-            className="bg-gray-50 dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm modal-active"
+            onClick={() => setSelectedNoPhotoRow(null)}
           >
-            {/* Modal Header */}
-            <div className="p-5 sm:px-8 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 relative">
-              <div className="flex items-center gap-4 w-full">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-800 shrink-0 shadow-inner">
-                  <svg className="w-7 h-7 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0 pr-8 sm:pr-0">
-                  <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-1 truncate">
-                    รายการ No Photo: <span className="text-indigo-600 dark:text-indigo-400">ที่ทำการ{selectedNoPhotoRow.office}</span>
-                  </h3>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
-                    <span className="font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-md">
-                      รวมทั้งหมด {selectedNoPhotoRow.no_photo} ครั้ง
-                    </span>
-                    <span className="hidden sm:inline">•</span>
-                    <span className="font-medium bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
-                      รหัส ปณ. {selectedNoPhotoRow.post_code}
-                    </span>
-                  </div>
-                </div>
-              </div>
-              <button
-                onClick={() => setSelectedNoPhotoRow(null)}
-                className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 absolute sm:static top-5 right-5 bg-white dark:bg-gray-800 sm:bg-transparent shadow-sm sm:shadow-none border border-gray-100 dark:border-gray-700 sm:border-transparent"
-                title="ปิดหน้าต่าง"
-              >
-                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-4 sm:p-6 overflow-y-auto flex-1 relative scroll-smooth">
-              {groupedNoPhotoItems.length > 0 ? (
-                <div className="space-y-8 pb-4">
-                  {groupedNoPhotoItems.map((group, groupIdx) => (
-                    <div key={groupIdx} className="relative">
-                      {/* Date Header */}
-                      <div className="relative flex items-center gap-3 mb-4 bg-gray-50/95 dark:bg-gray-900/95 py-2.5 px-2 -mx-2 rounded-xl border border-transparent">
-                        <div className="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full shadow-sm"></div>
-                        <h4 className="font-extrabold text-gray-800 dark:text-gray-100 text-lg tracking-tight">
-                          {group.date}
-                        </h4>
-                        <div className="flex-1 border-t border-dashed border-gray-300 dark:border-gray-700 mx-2"></div>
-                        <span className="text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full shadow-sm">
-                          {group.items.length} รายการ
-                        </span>
-                      </div>
-                      
-                      {/* Grid of Items */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {group.items.map((item, idx) => {
-                          const platform = item.file_key.toLowerCase();
-                          let bgClass = "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
-                          let borderClass = "border-gray-200 dark:border-gray-700 hover:border-gray-300";
-                          let leftLineClass = "bg-gray-300 dark:bg-gray-600";
-                          
-                          if (platform === "tiktok") {
-                            bgClass = "bg-black text-white";
-                            leftLineClass = "bg-black dark:bg-gray-400";
-                          } else if (platform === "shopee") {
-                            bgClass = "bg-[#ee4d2d] text-white";
-                            leftLineClass = "bg-[#ee4d2d]";
-                          } else if (platform === "lazada") {
-                            bgClass = "bg-[#0f146d] text-white";
-                            leftLineClass = "bg-[#0f146d] dark:bg-blue-400";
-                          }
-
-                          return (
-                            <div
-                              key={idx}
-                              className={`bg-white dark:bg-gray-800 border ${borderClass} rounded-2xl p-5 shadow-sm hover:shadow-md transition-all flex flex-col gap-3 relative group overflow-hidden`}
-                            >
-                              {/* Left Edge Decoration */}
-                              <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${leftLineClass} opacity-80 group-hover:opacity-100 transition-opacity`}></div>
-                              
-                              <div className="flex justify-between items-start gap-3 pl-1.5">
-                                <div className="flex-1 min-w-0">
-                                  <a
-                                    href={`https://qms.thailandpost.com/Web/Tracking/singleTracking.aspx?type=item&id=${item.barcode}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="font-mono font-black text-gray-900 dark:text-white text-lg hover:text-indigo-600 dark:hover:text-indigo-400 hover:underline flex items-center gap-1.5 transition-colors group-hover:text-indigo-600 dark:group-hover:text-indigo-400 truncate"
-                                    title="คลิกเพื่อตรวจสอบสถานะพัสดุ"
-                                  >
-                                    {item.barcode}
-                                    <svg
-                                      className="w-4 h-4 opacity-0 -ml-2 group-hover:opacity-100 group-hover:ml-0 transition-all text-indigo-500 shrink-0"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      stroke="currentColor"
-                                    >
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                    </svg>
-                                  </a>
-                                </div>
-                                <span className={`inline-flex justify-center shrink-0 min-w-[75px] text-[11px] px-3 py-1.5 rounded-lg shadow-sm font-bold tracking-wider uppercase ${bgClass}`}>
-                                  {item.file_key || "Unknown"}
-                                </span>
-                              </div>
-                              
-                              <div className="pl-1.5 flex flex-col gap-2.5 mt-1 border-t border-gray-100 dark:border-gray-700/50 pt-3">
-                                <div className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300">
-                                  <div className="w-6 h-6 rounded-full bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center shrink-0">
-                                    <svg className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                                    </svg>
-                                  </div>
-                                  <span className="truncate font-medium" title={item.name}>
-                                    <span className="text-gray-900 dark:text-gray-100">{item.name || "-"}</span>
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300">
-                                  <div className="w-6 h-6 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
-                                    <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2" />
-                                    </svg>
-                                  </div>
-                                  <span className="truncate font-medium" title={item.user_name}>
-                                    ID: <span className="text-gray-900 dark:text-gray-100">{item.user_name || "-"}</span>
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="h-full flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400">
-                  <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-5">
-                    <svg className="w-10 h-10 text-gray-400 dark:text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <div
+              className="bg-gray-50 dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="p-5 sm:px-8 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 relative">
+                <div className="flex items-center gap-4 w-full">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 dark:from-indigo-900/40 dark:to-purple-900/40 flex items-center justify-center border border-indigo-100 dark:border-indigo-800 shrink-0 shadow-inner">
+                    <svg
+                      className="w-7 h-7 text-indigo-600 dark:text-indigo-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                      />
                     </svg>
                   </div>
-                  <p className="text-xl font-bold text-gray-700 dark:text-gray-300">ไม่มีรายละเอียดข้อมูล</p>
+                  <div className="flex-1 min-w-0 pr-8 sm:pr-0">
+                    <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-1 truncate">
+                      รายการ No Photo:{" "}
+                      <span className="text-indigo-600 dark:text-indigo-400">
+                        ที่ทำการ{selectedNoPhotoRow.office}
+                      </span>
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 px-2 py-0.5 rounded-md">
+                        รวมทั้งหมด {selectedNoPhotoRow.no_photo} ครั้ง
+                      </span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="font-medium bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                        รหัส ปณ. {selectedNoPhotoRow.post_code}
+                      </span>
+                    </div>
+                  </div>
                 </div>
-              )}
-            </div>
+                <button
+                  onClick={() => setSelectedNoPhotoRow(null)}
+                  className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 absolute sm:static top-5 right-5 bg-white dark:bg-gray-800 sm:bg-transparent shadow-sm sm:shadow-none border border-gray-100 dark:border-gray-700 sm:border-transparent"
+                  title="ปิดหน้าต่าง"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
 
-            {/* Modal Footer */}
-            <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 flex justify-end">
-              <button
-                onClick={() => setSelectedNoPhotoRow(null)}
-                className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
-              >
-                <span>ปิดหน้าต่าง</span>
-              </button>
+              {/* Modal Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 relative scroll-smooth">
+                {groupedNoPhotoItems.length > 0 ? (
+                  <div className="space-y-8 pb-4">
+                    {groupedNoPhotoItems.map((group, groupIdx) => (
+                      <div key={groupIdx} className="relative">
+                        {/* Date Header */}
+                        <div className="relative flex items-center gap-3 mb-4 bg-gray-50/95 dark:bg-gray-900/95 py-2.5 px-2 -mx-2 rounded-xl border border-transparent">
+                          <div className="w-1.5 h-6 bg-gradient-to-b from-indigo-500 to-purple-600 rounded-full shadow-sm"></div>
+                          <h4 className="font-extrabold text-gray-800 dark:text-gray-100 text-lg tracking-tight">
+                            {group.date}
+                          </h4>
+                          <div className="flex-1 border-t border-dashed border-gray-300 dark:border-gray-700 mx-2"></div>
+                          <span className="text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full shadow-sm">
+                            {group.items.length} รายการ
+                          </span>
+                        </div>
+
+                        {/* Table of Items */}
+                        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm mt-3">
+                          <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                              <tr>
+                                <th className="px-4 py-3 font-medium">
+                                  บาร์โค้ด (Barcode)
+                                </th>
+                                <th className="px-4 py-3 font-medium text-center">
+                                  แพลตฟอร์ม
+                                </th>
+                                <th className="px-4 py-3 font-medium">
+                                  ชื่อเจ้าหน้าที่
+                                </th>
+                                <th className="px-4 py-3 font-medium text-center">
+                                  รหัสเจ้าหน้าที่
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                              {group.items.map((item, idx) => {
+                                const platform = item.file_key.toLowerCase();
+                                let bgClass =
+                                  "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+
+                                if (platform === "tiktok")
+                                  bgClass = "bg-black text-white";
+                                else if (platform === "shopee")
+                                  bgClass = "bg-[#ee4d2d] text-white";
+                                else if (platform === "lazada")
+                                  bgClass = "bg-[#0f146d] text-white";
+
+                                return (
+                                  <tr
+                                    key={idx}
+                                    className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                                  >
+                                    <td className="px-4 py-3">
+                                      <a
+                                        href={`https://qms.thailandpost.com/Web/Tracking/singleTracking.aspx?type=item&id=${item.barcode}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-mono font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1.5"
+                                      >
+                                        {item.barcode}
+                                        <svg
+                                          className="w-3.5 h-3.5"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2.5}
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                          />
+                                        </svg>
+                                      </a>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                      <span
+                                        className={`inline-flex justify-center min-w-[75px] text-[10px] px-2.5 py-1 rounded-md font-bold tracking-wider uppercase ${bgClass}`}
+                                      >
+                                        {item.file_key || "Unknown"}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                                      {item.name || "-"}
+                                    </td>
+                                    <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300 font-medium">
+                                      {item.user_name || "-"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400">
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-5">
+                      <svg
+                        className="w-10 h-10 text-gray-400 dark:text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                      ไม่มีรายละเอียดข้อมูล
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 flex justify-end">
+                <button
+                  onClick={() => setSelectedNoPhotoRow(null)}
+                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
+                >
+                  <span>ปิดหน้าต่าง</span>
+                </button>
+              </div>
             </div>
-          </div>
-        </div>,
-        document.body
-      )}
+          </div>,
+          document.body,
+        )}
+
+      {/* Modal for Waiting Details */}
+      {mounted &&
+        selectedWaitingRow &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-gray-900/60 backdrop-blur-sm modal-active"
+            onClick={() => setSelectedWaitingRow(null)}
+          >
+            <div
+              className="bg-gray-50 dark:bg-gray-900 rounded-3xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all border border-gray-200 dark:border-gray-700"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Modal Header */}
+              <div className="p-5 sm:px-8 border-b border-gray-200 dark:border-gray-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white dark:bg-gray-800 relative">
+                <div className="flex items-center gap-4 w-full">
+                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/40 dark:to-orange-900/40 flex items-center justify-center border border-amber-100 dark:border-amber-800 shrink-0 shadow-inner">
+                    <svg
+                      className="w-7 h-7 text-amber-600 dark:text-amber-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0 pr-8 sm:pr-0">
+                    <h3 className="text-xl sm:text-2xl font-black text-gray-900 dark:text-white tracking-tight mb-1 truncate">
+                      รายการ Waiting:{" "}
+                      <span className="text-amber-600 dark:text-amber-400">
+                        ที่ทำการ{selectedWaitingRow.office}
+                      </span>
+                    </h3>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="font-bold text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 px-2 py-0.5 rounded-md">
+                        รวมทั้งหมด {selectedWaitingRow.waiting} ครั้ง
+                      </span>
+                      <span className="hidden sm:inline">•</span>
+                      <span className="font-medium bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md">
+                        รหัส ปณ. {selectedWaitingRow.post_code}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setSelectedWaitingRow(null)}
+                  className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 absolute sm:static top-5 right-5 bg-white dark:bg-gray-800 sm:bg-transparent shadow-sm sm:shadow-none border border-gray-100 dark:border-gray-700 sm:border-transparent"
+                  title="ปิดหน้าต่าง"
+                >
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2.5}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1 relative scroll-smooth">
+                {groupedWaitingItems.length > 0 ? (
+                  <div className="space-y-8 pb-4">
+                    {groupedWaitingItems.map((group, groupIdx) => (
+                      <div key={groupIdx} className="relative">
+                        {/* Date Header */}
+                        <div className="relative flex items-center gap-3 mb-4 bg-gray-50/95 dark:bg-gray-900/95 py-2.5 px-2 -mx-2 rounded-xl border border-transparent">
+                          <div className="w-1.5 h-6 bg-gradient-to-b from-amber-500 to-orange-600 rounded-full shadow-sm"></div>
+                          <h4 className="font-extrabold text-gray-800 dark:text-gray-100 text-lg tracking-tight">
+                            {group.date}
+                          </h4>
+                          <div className="flex-1 border-t border-dashed border-gray-300 dark:border-gray-700 mx-2"></div>
+                          <span className="text-xs font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-3 py-1 rounded-full shadow-sm">
+                            {group.items.length} รายการ
+                          </span>
+                        </div>
+
+                        {/* Table of Items */}
+                        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm mt-3">
+                          <table className="w-full text-left text-sm whitespace-nowrap">
+                            <thead className="bg-gray-50 dark:bg-gray-900/50 text-gray-600 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                              <tr>
+                                <th className="px-4 py-3 font-medium">
+                                  บาร์โค้ด (Barcode)
+                                </th>
+                                <th className="px-4 py-3 font-medium text-center">
+                                  แพลตฟอร์ม
+                                </th>
+                                <th className="px-4 py-3 font-medium">
+                                  ชื่อเจ้าหน้าที่
+                                </th>
+                                <th className="px-4 py-3 font-medium text-center">
+                                  ID
+                                </th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
+                              {group.items.map((item, idx) => {
+                                const platform = item.file_key.toLowerCase();
+                                let bgClass =
+                                  "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300";
+
+                                if (platform === "tiktok")
+                                  bgClass = "bg-black text-white";
+                                else if (platform === "shopee")
+                                  bgClass = "bg-[#ee4d2d] text-white";
+                                else if (platform === "lazada")
+                                  bgClass = "bg-[#0f146d] text-white";
+
+                                return (
+                                  <tr
+                                    key={idx}
+                                    className="hover:bg-gray-50 dark:hover:bg-gray-750 transition-colors"
+                                  >
+                                    <td className="px-4 py-3">
+                                      <a
+                                        href={`https://qms.thailandpost.com/Web/Tracking/singleTracking.aspx?type=item&id=${item.barcode}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="font-mono font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1.5"
+                                      >
+                                        {item.barcode}
+                                        <svg
+                                          className="w-3.5 h-3.5"
+                                          fill="none"
+                                          viewBox="0 0 24 24"
+                                          stroke="currentColor"
+                                        >
+                                          <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2.5}
+                                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                                          />
+                                        </svg>
+                                      </a>
+                                    </td>
+                                    <td className="px-4 py-3 text-center">
+                                      <span
+                                        className={`inline-flex justify-center min-w-[75px] text-[10px] px-2.5 py-1 rounded-md font-bold tracking-wider uppercase ${bgClass}`}
+                                      >
+                                        {item.file_key || "Unknown"}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-gray-700 dark:text-gray-300">
+                                      {item.name || "-"}
+                                    </td>
+                                    <td className="px-4 py-3 text-center text-gray-700 dark:text-gray-300 font-medium">
+                                      {item.user_name || "-"}
+                                    </td>
+                                  </tr>
+                                );
+                              })}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="h-full flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400">
+                    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-5">
+                      <svg
+                        className="w-10 h-10 text-gray-400 dark:text-gray-500"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={1.5}
+                          d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
+                      </svg>
+                    </div>
+                    <p className="text-xl font-bold text-gray-700 dark:text-gray-300">
+                      ไม่มีรายละเอียดข้อมูล
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 sm:p-5 border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 flex justify-end">
+                <button
+                  onClick={() => setSelectedWaitingRow(null)}
+                  className="px-6 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-800 dark:bg-gray-700 dark:hover:bg-gray-600 dark:text-gray-200 rounded-xl font-bold transition-all shadow-sm hover:shadow active:scale-95 flex items-center gap-2"
+                >
+                  <span>ปิดหน้าต่าง</span>
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
