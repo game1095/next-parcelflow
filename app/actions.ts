@@ -147,6 +147,8 @@ export async function fetchDashboardData(
         file_type_details: { tiktok: 0, shopee: 0, lazada: 0, other: 0 },
         no_photo_items: [],
         waiting: 0,
+        waiting_details: { tiktok: 0, shopee: 0, lazada: 0, other: 0 },
+        waiting_items: [],
         completed: 0,
         report_date: row.report_date || null,
       };
@@ -221,6 +223,23 @@ export async function fetchDashboardData(
       rawItems.push(itemObj);
     } else if (status === "waiting" || status.includes("waiting")) {
       summaryMap[key].waiting++;
+      
+      const platform = (row.file_key || "").toLowerCase();
+      if (platform === "tiktok") summaryMap[key].waiting_details.tiktok++;
+      else if (platform === "shopee")
+        summaryMap[key].waiting_details.shopee++;
+      else if (platform === "lazada")
+        summaryMap[key].waiting_details.lazada++;
+      else summaryMap[key].waiting_details.other++;
+
+      summaryMap[key].waiting_items.push({
+        barcode: row.barcode || "-",
+        user_name: row.user_name || "-",
+        name: row.name || "-",
+        file_key: row.file_key || "Unknown",
+        office: row.office || "ไม่ระบุ",
+        report_date: row.report_date || null,
+      });
     } else if (status === "completed" || status.includes("completed")) {
       summaryMap[key].completed++;
     }
