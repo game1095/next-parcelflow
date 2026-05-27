@@ -20,7 +20,7 @@ interface DashboardClientProps {
 
 export default function DashboardClient({ isSetup }: DashboardClientProps) {
   const [activeTab, setActiveTab] = useState<
-    "overview" | "nophoto" | "analytics" | "individual" | "execsummary"
+    "overview" | "nophoto" | "analytics" | "individual" | "execsummary" | "leaderboard" | "reports" | "resolution"
   >("overview");
 
   // Global Filters
