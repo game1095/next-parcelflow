@@ -48,7 +48,7 @@ export default function DataTable({ data }: { data: SummaryRow[] }) {
   } | null>({ key: "no_photo", direction: "desc" });
 
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 20;
 
   const [selectedNoPhotoRow, setSelectedNoPhotoRow] =
     useState<SummaryRow | null>(null);
